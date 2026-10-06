@@ -24,6 +24,20 @@
       </span>
     </p>
 
+    <section class="desk-panel">
+      <h3>汛前调度待办·泵站批</h3>
+      <ul v-if="dispatchTodos.length" class="dispatch-todo-list">
+        <li v-for="todo in dispatchTodos" :key="todo.id">
+          <strong>{{ todo.title }}</strong>
+          <span>{{ todo.grid }} {{ todo.hour }}:00</span>
+          <span>责任人：{{ todo.assignee }}</span>
+          <span>依据：{{ todo.reason }}</span>
+          <span>调度人：{{ todo.operator }} · {{ todo.at }}</span>
+        </li>
+      </ul>
+      <p v-else class="empty-state">暂无汛前调度下发的泵站待办</p>
+    </section>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -79,6 +93,8 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import { listModuleTodos } from '@/api/dispatch-service'
+import type { ModuleTodo } from '@/data/dispatch-types'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('pump_station')
@@ -91,6 +107,7 @@ const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
+const dispatchTodos = ref<ModuleTodo[]>([])
 const filterFields = columns.slice(0, 3)
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
@@ -124,6 +141,7 @@ function runAction(action: string, row: EntryRow) {
 
 function reload() {
   errorMessage.value = ''
+  dispatchTodos.value = listModuleTodos(meta.key)
   try {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items

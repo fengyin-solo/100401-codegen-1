@@ -28,6 +28,7 @@
         </tr>
       </tbody>
     </table>
+    <DispatchDesk />
     <footer class="page-foot">
       <span>数据保存在本机浏览器里，换浏览器或清缓存会回到示例数据</span>
     </footer>
@@ -39,6 +40,7 @@ import { onMounted, ref } from 'vue'
 
 import { loadOverview } from '@/api/local-service'
 import type { OverviewResult } from '@/data/types'
+import DispatchDesk from '@/views/dispatch/DispatchDesk.vue'
 
 const cards = ref<OverviewResult['cards']>([])
 const moduleRows = ref<OverviewResult['modules']>([])
