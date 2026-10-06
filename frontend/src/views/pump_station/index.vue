@@ -11,6 +11,13 @@
       </div>
     </header>
 
+    <DispatchInbox
+      title="调度桌泵站待办"
+      self-label="泵站"
+      :todos="inboxTodos"
+      @complete="completeInboxTodo"
+    />
+
     <div class="stat-row">
       <article v-for="item in stats" :key="item.label" class="stat-card">
         <span class="stat-label">{{ item.label }}</span>
@@ -71,8 +78,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
+import DispatchInbox from '@/components/dispatch/InboxPanel.vue'
+import {
+  completeTodo,
+  listTodos,
+} from '@/api/dispatch-service'
+import { subscribeDispatch } from '@/data/dispatch-store'
+import type { DispatchTodo } from '@/data/dispatch-types'
 import {
   downloadEntries,
   listEntries,
@@ -92,6 +106,22 @@ const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+const inboxTodos = ref<DispatchTodo[]>([])
+
+function refreshInbox() {
+  inboxTodos.value = listTodos('pump_station')
+}
+
+function completeInboxTodo(id: string) {
+  const result = completeTodo(id)
+  if (!result.ok) {
+    errorMessage.value = result.message
+    return
+  }
+  refreshInbox()
+}
+
+let unsubscribe: (() => void) | undefined
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
     status,
@@ -133,5 +163,12 @@ function reload() {
   }
 }
 
-onMounted(reload)
+onMounted(() => {
+  reload()
+  refreshInbox()
+  unsubscribe = subscribeDispatch(() => {
+    refreshInbox()
+  })
+})
+onUnmounted(() => unsubscribe?.())
 </script>
